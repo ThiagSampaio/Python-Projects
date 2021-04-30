@@ -1,7 +1,8 @@
-import pandas as pd
+
 import smtplib
 from Data_Processing import Data_Processing
 from criar_lista import criar_lista
+
 from tkinter import *
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -20,16 +21,29 @@ msgImage = MIMEImage(fp.read())
 
 fp.close()
 
-
-def UploadAction_File(event=None):
+def UploadAction_File():
     file = filedialog.askopenfilename()
     global lista_estados, dict_data
     lista_estados, dict_data = Data_Processing(file)
     criar_lista(lista_estados)
 
 
+def Upload_Imagens():
+    numero_anexos = int(N_anexos_entry.get())
+    dicionario_imagens = {}
+    for i in range(1, numero_anexos + 1):
+        file = filedialog.askopenfilename()
+        fp = open(file,"rb")
+        dicionario_imagens[f"image{i}"] = MIMEImage(fp.read())
+        fp.close()
+    return dicionario_imagens
+
+
+
+
 
 def mandar_email():
+    dicionario_imagens = Upload_Imagens()
 
     fromaddr = fromaddr_entry.get()
     Subject_message = Subject_entry.get()
@@ -58,6 +72,8 @@ def mandar_email():
             encoders.encode_base64(p)
             p.add_header('Content-Disposition', "attachment; filename= %s" % filename)
             #msg.attach(p)
+            for item in dicionario_imagens.values():
+                msg.attach(item)
             s = smtplib.SMTP('smtp.gmail.com', 587)
             s.starttls()
             s.login(fromaddr, senha)
@@ -85,7 +101,9 @@ def mandar_email():
                 p.add_header('Content-Disposition', "attachment; filename= %s" % filename)
                 #msg.attach(p)
                 #msg.attach(part)
-                msg.attach(msgImage)
+                for item in dicionario_imagens.values():
+                    msg.attach(item)
+                #msg.attach(msgImage)
                 s = smtplib.SMTP('smtp.gmail.com', 587)
                 s.starttls()
                 s.login(fromaddr, senha)
@@ -118,6 +136,8 @@ Subject_label.grid(column=0, row=4)
 corpo_label = Label(text="SENHA DO EMAIL:", font=("Arial", 10, "bold"),bg=COR_BRANCA)
 corpo_label.grid(column=0, row=3)
 
+N_anexos= Label(text="Numero de anexos", font=("Arial", 10, "bold"),bg=COR_BRANCA)
+N_anexos.grid(column=0, row=5)
 
 # -- ENTRY -- #
 fromaddr_entry = Entry(width=35, bg='#cccccc')
@@ -129,6 +149,9 @@ Subject_entry.grid(column=0, row=4, columnspan=2)
 
 corpo_entry = Entry(width=35, bg='#cccccc')
 corpo_entry.grid(column=0, row=3, columnspan=2)
+
+N_anexos_entry = Entry(width=35, bg='#cccccc')
+N_anexos_entry .grid(column=0, row=5, columnspan=2)
 
 
 # -- BUTTON SETUP -- #
